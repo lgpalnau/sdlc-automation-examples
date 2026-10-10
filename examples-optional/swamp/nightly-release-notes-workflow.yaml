@@ -1,0 +1,26 @@
+# Optional: Swamp workflow that runs the release-notes model.
+#
+# Follows the documented workflow format from the Swamp repo
+# (design/enablers/inputs.md). Trigger it on demand:
+#
+#   swamp workflow run nightly-release-notes
+#
+# or attach it to Swamp's scheduler / a webhook trigger so the notes
+# rebuild the same way every time, with every run recorded.
+id: a1b2c3d4-1111-2222-3333-444455556666
+name: nightly-release-notes
+jobs:
+  - name: generate-notes
+    description: Generate release notes since the last tag
+    steps:
+      - name: build-notes
+        description: Run the release-notes model
+        task:
+          type: model_method
+          modelIdOrName: release-notes
+          methodName: execute
+          inputs:
+            since: "v1.2.0"
+            title: "Nightly release notes"
+        dependsOn: []
+        weight: 0

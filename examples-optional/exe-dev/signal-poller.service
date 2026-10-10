@@ -1,0 +1,31 @@
+# Optional: run the Signal -> GitHub issue poller 24/7 on an exe.dev sandbox.
+#
+# exe.dev gives you a durable, private VM where you are root with systemd —
+# a natural always-on host for the chat listener. On the box:
+#
+#   1. git clone <this repo> /opt/sdlc-automation-examples
+#   2. cd /opt/sdlc-automation-examples && just up
+#      (installs uv + signal-cli first: apt install signal-cli, or uv tool install)
+#   3. Put GITHUB_TOKEN in /etc/signal-poller.env:
+#        GITHUB_TOKEN=ghp_...
+#   4. Edit the ExecStart line below with your Signal number and repo,
+#      then: systemctl enable --now signal-poller
+#
+# The poller keeps running across reconnects; one bad message never kills
+# the loop (it logs to stderr and keeps polling).
+
+[Unit]
+Description=Signal to GitHub issue poller
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/sdlc-automation-examples
+EnvironmentFile=/etc/signal-poller.env
+ExecStart=/bin/sh -c 'signal-cli -u +15551234567 receive --json | /root/.local/bin/uv run automations/signal_to_issue.py --repo owner/repo'
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,30 @@
+# Optional: Swamp model wrapping the release-notes example.
+#
+# Follows the documented `command/shell` model format from the Swamp repo
+# (design/enablers/inputs.md): a validated, versioned schema whose runs are
+# recorded and auditable. Validate before use:
+#
+#   swamp model validate release-notes
+#
+# Then run it the same way every time:
+#
+#   swamp model method run release-notes execute \
+#       --input since=v1.2.0 --input title="v1.3.0"
+type: command/shell
+typeVersion: 1
+id: 7f3a1c2e-4b5d-4a6e-8f9a-1b2c3d4e5f60
+name: release-notes
+version: 1
+tags:
+  sdlc: automation
+inputs:
+  since:
+    type: string
+    description: "Git ref to start from, e.g. v1.2.0"
+  title:
+    type: string
+    description: "Title for the release notes document"
+methods:
+  execute:
+    arguments:
+      run: uv run automations/release_notes.py --since "${{ inputs.since }}" --title "${{ inputs.title }}"
