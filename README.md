@@ -2,9 +2,9 @@
 
 Small, real-world Python automation scripts for the software delivery
 lifecycle — the kind of weekend-sized work I do for small teams.
-Managed with [uv](https://docs.astral.sh/uv/), linted with
+Managed with [uv](https://docs.astral.sh/uv/), formatted and linted with
 [ruff](https://docs.astral.sh/ruff/), type-checked with
-[ty](https://docs.astral.sh/ty/), unit tested with [pytest](https://docs.pytest.org/en/stable/), and gated by
+[ty](https://github.com/bwhmather/ty), unit tested with [pytest](https://docs.pytest.org/en/stable/), and gated by
 GitHub Actions on every commit pushed.
 
 ## Examples
@@ -13,38 +13,63 @@ GitHub Actions on every commit pushed.
 | --- | --- |
 | `automations/release_notes.py` | Generates Markdown release notes from `git log` between two refs, grouped by conventional-commit category |
 | `automations/signal_to_issue.py` | Chat-triggered automation: messages starting with `/issue` (e.g. from Signal via `signal-cli`) become GitHub issues through the REST API |
-| `justfile` | Repo command standards: `up`, `down`, `lint`, `ty`, `test`, `clean`, `run` — the same recipes in every repo |
+| `justfile` | Standardized commands: `up`, `down`, `fmt`, `lint`, `ty`, `test`, `clean`, `run-workflow`, `run-release-notes`, `run-signal-to-issue` |
 
 ## Quickstart
 
 ```bash
-just up        # uv sync — create the environment and install dev deps
-just lint      # ruff check
-just ty        # ty check
-just test      # pytest
-just clean     # remove generated artifacts
-just down      # remove the environment
+just up                 # uv sync — create the environment and install dev deps
+just test               # format, lint, type-check, and test modified files
+just test all           # full format, lint, type-check, and entire test suite
+just clean              # remove generated artifacts
+just down               # remove the environment
 ```
 
 Or without [just](https://just.systems/):
 
 ```bash
 uv sync
-uv run ruff check .
+uv run ruff format .
+uv run ruff check --fix .
 uvx ty check .
 uv run pytest
 ```
 
-## Try the examples
+## Running the Examples & Workflows
+
+### Triggering GitHub Actions via GitHub CLI
+
+Dispatch GitHub Actions workflows directly from the terminal using `gh`:
 
 ```bash
-# release notes since the last tag
-just run -- --since v1.2.0 --title "v1.3.0"
+# View available flags and help
+just run-workflow
 
-# chat -> GitHub issue (reads signal-cli JSON envelopes from stdin)
+# Trigger a workflow by file name or workflow ID
+just run-workflow release.yml -f version=v1.2.0
+```
+
+### Release Notes Generator
+
+```bash
+# Show options
+just run-release-notes --help
+
+# Generate release notes since the last tag
+just run-release-notes --since v1.2.0 --title "v1.3.0"
+```
+
+### Signal to GitHub Issue
+
+```bash
 export GITHUB_TOKEN=ghp_...
+
+# View arguments
+just run-signal-to-issue --help
+
+# Run listener pipe from signal-cli JSON envelopes
 signal-cli -u +15551234567 receive --json | \
-    uv run automations/signal_to_issue.py --repo owner/repo
+    just run-signal-to-issue --repo owner/repo
 # then send "/issue deploy is broken | fails on staging" from Signal
 ```
 
