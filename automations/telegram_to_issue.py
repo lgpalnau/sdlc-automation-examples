@@ -87,7 +87,7 @@ def handle_update(
         return None
     url = None
     if not command.title:
-        reply = "Usage: /issue <title> [| <body>"
+        reply = "Usage: /issue <title> [| <body>]"
     else:
         try:
             url = create_issue(repo=repo, title=command.title, body=command.body)
@@ -122,7 +122,7 @@ def poll(token: str, offset: int, *, repo: str, allowed: set[int]) -> int:
             print(f"error: {exc}", file=sys.stderr)
             continue
         if url:
-            print(f"created: {url}")
+            print(f"created: {url}", flush=True)
     return offset
 
 
