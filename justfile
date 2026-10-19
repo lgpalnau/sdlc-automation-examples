@@ -35,7 +35,7 @@ test scope="modified":
         uvx ty check .
         uv run pytest
     else
-        MODIFIED=$(git diff --name-only HEAD | grep -E '\.py$' || true)
+        MODIFIED=$(git diff --name-only --diff-filter=d HEAD | grep -E '\.py$' || true)
         UNTRACKED=$(git ls-files --others --exclude-standard | grep -E '\.py$' || true)
         FILES=$(echo -e "${MODIFIED}\n${UNTRACKED}" | sed '/^$/d' | sort -u | tr '\n' ' ')
         if [ -z "${FILES}" ]; then
@@ -59,9 +59,9 @@ run-workflow *args="--help":
 run-release-notes *args="--help":
     uv run automations/release_notes.py {{args}}
 
-# Run the signal-to-issue automation
-run-signal-to-issue *args="--help":
-    uv run automations/signal_to_issue.py {{args}}
+# Run the telegram-to-issue automation
+run-telegram-to-issue *args="--help":
+    uv run automations/telegram_to_issue.py {{args}}
 
 # Remove generated artifacts (never the environment itself — that's `down`)
 clean:

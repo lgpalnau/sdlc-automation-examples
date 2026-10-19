@@ -12,8 +12,8 @@ GitHub Actions on every commit pushed.
 | Example | What it does |
 | --- | --- |
 | `automations/release_notes.py` | Generates Markdown release notes from `git log` between two refs, grouped by conventional-commit category |
-| `automations/signal_to_issue.py` | Chat-triggered automation: messages starting with `/issue` (e.g. from Signal via `signal-cli`) become GitHub issues through the REST API |
-| `justfile` | Standardized commands: `up`, `down`, `fmt`, `lint`, `ty`, `test`, `clean`, `run-workflow`, `run-release-notes`, `run-signal-to-issue` |
+| `automations/telegram_to_issue.py` | Chat-triggered automation: Telegram messages starting with `/issue` from allowlisted users become GitHub issues via `gh issue create`, and the bot replies with the issue URL |
+| `justfile` | Standardized commands: `up`, `down`, `fmt`, `lint`, `ty`, `test`, `clean`, `run-workflow`, `run-release-notes`, `run-telegram-to-issue` |
 
 ## Quickstart
 
@@ -59,23 +59,32 @@ just run-release-notes --help
 just run-release-notes --since v1.2.0 --title "v1.3.0"
 ```
 
-### Signal to GitHub Issue
+### Telegram to GitHub Issue
+
+One-time setup:
+
+1. Message [@BotFather](https://t.me/BotFather), send `/newbot`, and copy
+   the bot token.
+2. Get your numeric Telegram user ID (e.g. message
+   [@userinfobot](https://t.me/userinfobot)). Only allowlisted user IDs can
+   file issues; everyone else is ignored.
+3. Authenticate the GitHub CLI: `gh auth login` (or set `GH_TOKEN`).
 
 ```bash
-export GITHUB_TOKEN=ghp_...
+export TELEGRAM_BOT_TOKEN=123456:ABC...   # or put it in .env
 
 # View arguments
-just run-signal-to-issue --help
+just run-telegram-to-issue --help
 
-# Run listener pipe from signal-cli JSON envelopes
-signal-cli -u +15551234567 receive --json | \
-    just run-signal-to-issue --repo owner/repo
-# then send "/issue deploy is broken | fails on staging" from Signal
+# Long-poll Telegram and file issues in owner/repo (repeat --allow per user)
+just run-telegram-to-issue --repo owner/repo --allow 123456789
+# then message your bot: "/issue deploy is broken | fails on staging"
+# and it replies "Created https://github.com/owner/repo/issues/N"
 ```
 
-The issue-creation logic is transport-agnostic: the stdin loop can be
-swapped for a webhook handler and the parsing + GitHub API code stays
-the same.
+Polling needs no public URL or webhook, so it runs on a laptop or any
+always-on box. Issue creation goes through `gh`, so there is no GitHub
+token handling in the script.
 
 ## Optional integrations
 
@@ -96,10 +105,10 @@ already use. Nothing here is required.
 - **exe.dev ([exe.dev](https://exe.dev))** — durable, private VMs for
   developers and agents (you're root, with systemd). A natural
   always-on host for the chat listener:
-  `examples-optional/exe-dev/signal-poller.service` is a systemd unit
-  that keeps `signal_to_issue.py` polling Signal 24/7, restarting on
-  failure. Edit the number/repo, drop your `GITHUB_TOKEN` in
-  `/etc/signal-poller.env`, `systemctl enable --now signal-poller`.
+  `examples-optional/exe-dev/telegram-poller.service` is a systemd unit
+  that keeps `telegram_to_issue.py` polling Telegram 24/7, restarting on
+  failure. Edit the repo/user ID, drop `TELEGRAM_BOT_TOKEN` and `GH_TOKEN`
+  in `/etc/telegram-poller.env`, `systemctl enable --now telegram-poller`.
 
 ## Why this exists
 

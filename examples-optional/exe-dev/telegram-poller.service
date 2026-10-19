@@ -1,0 +1,32 @@
+# Optional: run the Telegram -> GitHub issue poller 24/7 on an exe.dev sandbox.
+#
+# exe.dev gives you a durable, private VM where you are root with systemd —
+# a natural always-on host for the chat listener. On the box:
+#
+#   1. git clone <this repo> /opt/sdlc-automation-examples
+#   2. cd /opt/sdlc-automation-examples && just up
+#      (installs uv + the GitHub CLI first: apt install gh)
+#   3. Put the bot token and a GitHub token for gh in /etc/telegram-poller.env:
+#        TELEGRAM_BOT_TOKEN=123456:ABC...
+#        GH_TOKEN=ghp_...
+#   4. Edit the ExecStart line below with your repo and Telegram user ID,
+#      then: systemctl enable --now telegram-poller
+#
+# The poller retries through network blips; one bad message never kills
+# the loop (it logs to stderr and keeps polling).
+
+[Unit]
+Description=Telegram to GitHub issue poller
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/sdlc-automation-examples
+EnvironmentFile=/etc/telegram-poller.env
+ExecStart=/root/.local/bin/uv run automations/telegram_to_issue.py --repo owner/repo --allow 123456789
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
